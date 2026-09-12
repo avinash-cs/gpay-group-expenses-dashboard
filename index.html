@@ -36,7 +36,23 @@
   <style>
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .exporting .sticky { position: static !important; }
+    
+    /* Export-specific styling to fix clipping and guarantee perfect centering */
+    .exporting { 
+      display: inline-block !important; /* Shrink-wraps the container tightly to the table */
+      width: max-content !important; 
+      max-width: none !important; 
+      min-width: 0 !important;
+      padding: 48px !important; 
+      border-radius: 0 !important; 
+      margin: 0 !important; 
+    }
+    .exporting .overflow-x-auto {
+      overflow: visible !important;
+      width: auto !important;
+      padding: 0 !important; 
+    }
+    
     @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
     .animate-slide-up { animation: slide-up 0.3s ease-out forwards; }
   </style>
@@ -202,7 +218,6 @@
     const repoUrl = "https://avinash-cs.github.io/gpay-group-expenses-dashboard/";
     let currentShareGroup = "";
 
-    // Dummy Data for "View Example"
     const sampleData = [
       {
         "creation_time": "2026-08-15T10:00:00Z",
@@ -262,7 +277,6 @@
 
     removeFileBtn.addEventListener('click', resetUI);
 
-    // Handle "View Example" Button Click
     loadSampleBtn.addEventListener('click', () => {
       uploadError.classList.add('hidden');
       fileNameDisplay.innerText = "Sample_Data.json";
@@ -403,13 +417,14 @@
 
         let tableHTML = `
           <div class="text-center mb-4 sm:mb-6 px-4 sm:px-0">
-            <h4 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Monthly Breakdown</h4>
+            <h3 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">${groupName}</h3>
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">Monthly Expense Breakdown</p>
           </div>
-          <div class="overflow-x-auto hide-scrollbar px-4 sm:px-0 pb-2">
+          <div class="overflow-x-auto pb-2">
             <table class="w-full border-collapse border border-gray-300 dark:border-gray-700 text-xs sm:text-sm whitespace-nowrap min-w-max">
               <thead>
                 <tr class="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-semibold border-b border-gray-300 dark:border-gray-700">
-                  <th class="sticky left-0 z-10 bg-gray-100 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-700 px-3 py-2.5 text-left shadow-[1px_0_0_0_#d1d5db] dark:shadow-[1px_0_0_0_#374151]">Month</th>
+                  <th class="border border-gray-300 dark:border-gray-700 px-3 py-2.5 text-left">Month</th>
                   <th class="border border-gray-300 dark:border-gray-700 px-3 py-2.5 text-right">Total Spend</th>
                   ${memberList.map(m => `<th class="border border-gray-300 dark:border-gray-700 px-3 py-2.5 text-right">${m}</th>`).join('')}
                 </tr>
@@ -421,7 +436,7 @@
           const mData = monthMap[mKey];
           tableHTML += `
             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-              <td class="sticky left-0 z-10 bg-white dark:bg-gpay-darkCard border-r border-gray-300 dark:border-gray-700 px-3 py-2 font-medium text-gray-700 dark:text-gray-300 shadow-[1px_0_0_0_#e5e7eb] dark:shadow-[1px_0_0_0_#374151]">${mData.label}</td>
+              <td class="bg-white dark:bg-gpay-darkCard border border-gray-300 dark:border-gray-700 px-3 py-2 font-medium text-gray-700 dark:text-gray-300">${mData.label}</td>
               <td class="border border-gray-300 dark:border-gray-700 px-3 py-2 text-right font-semibold text-gray-900 dark:text-white">${formatINR(mData.totalSpend)}</td>
               ${memberList.map(m => `<td class="border border-gray-300 dark:border-gray-700 px-3 py-2 text-right text-gray-600 dark:text-gray-400">${formatINR(mData.members[m] || 0)}</td>`).join('')}
             </tr>
@@ -430,7 +445,7 @@
 
         tableHTML += `
               <tr class="bg-gray-100 dark:bg-gray-800 font-bold border-t-2 border-gray-400 dark:border-gray-600">
-                <td class="sticky left-0 z-10 bg-gray-100 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-700 px-3 py-3 text-gray-900 dark:text-white shadow-[1px_0_0_0_#d1d5db] dark:shadow-[1px_0_0_0_#374151]">Total</td>
+                <td class="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 px-3 py-3 text-gray-900 dark:text-white">Total</td>
                 <td class="border border-gray-300 dark:border-gray-700 px-3 py-3 text-right text-gpay-blue">${formatINR(grandTotalSpend)}</td>
                 ${memberList.map(m => `<td class="border border-gray-300 dark:border-gray-700 px-3 py-3 text-right text-gray-900 dark:text-white">${formatINR(grandMemberTotals[m])}</td>`).join('')}
               </tr>
@@ -450,19 +465,39 @@
       });
     }
 
+    // Capture prep with a tiny 50ms delay to guarantee the CSS `.exporting` layout applies before taking the picture
+    async function prepareForExport(element) {
+      const htmlEl = document.documentElement;
+      const wasDark = htmlEl.classList.contains('dark');
+      
+      if (wasDark) htmlEl.classList.remove('dark');
+      element.classList.add('exporting'); 
+      element.classList.remove('bg-gpay-darkCard');
+      element.classList.add('bg-white', 'text-gray-900');
+      
+      await new Promise(r => setTimeout(r, 50));
+      return wasDark;
+    }
+
+    function revertAfterExport(element, wasDark) {
+      element.classList.remove('exporting', 'bg-white', 'text-gray-900');
+      if (wasDark) document.documentElement.classList.add('dark');
+    }
+
     async function exportAsImage(elementId, groupName) {
       const element = document.getElementById(elementId);
       if (!element) return;
 
-      const originalClass = element.className;
-      element.classList.add('exporting'); 
-      element.classList.remove('bg-gpay-darkCard', 'dark');
-      element.classList.add('bg-white', 'text-gray-900');
+      const wasDark = await prepareForExport(element);
 
-      const canvas = await html2canvas(element, { scale: 2, backgroundColor: "#ffffff" });
+      // By removing width limiters, html2canvas reads the true bounding box automatically
+      const canvas = await html2canvas(element, { 
+        scale: 2, 
+        backgroundColor: "#ffffff",
+        windowWidth: Math.max(element.scrollWidth, window.innerWidth)
+      });
       
-      element.className = originalClass;
-      element.classList.remove('exporting');
+      revertAfterExport(element, wasDark);
 
       canvas.toBlob((blob) => {
         const link = document.createElement('a');
@@ -479,15 +514,15 @@
 
       const message = `Check out our monthly Google Pay expense breakdown for ${groupName}! Generated securely from ${repoUrl}`;
       
-      const originalClass = element.className;
-      element.classList.add('exporting');
-      element.classList.remove('bg-gpay-darkCard', 'dark');
-      element.classList.add('bg-white', 'text-gray-900');
+      const wasDark = await prepareForExport(element);
 
-      const canvas = await html2canvas(element, { scale: 2, backgroundColor: "#ffffff" });
+      const canvas = await html2canvas(element, { 
+        scale: 2, 
+        backgroundColor: "#ffffff",
+        windowWidth: Math.max(element.scrollWidth, window.innerWidth)
+      });
       
-      element.className = originalClass;
-      element.classList.remove('exporting');
+      revertAfterExport(element, wasDark);
 
       canvas.toBlob(async (blob) => {
         const file = new File([blob], `${groupName.replace(/\s+/g, '_')}_expenses.png`, { type: "image/png" });
