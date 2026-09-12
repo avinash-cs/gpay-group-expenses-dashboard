@@ -39,7 +39,7 @@
     
     /* Export-specific styling to fix clipping and guarantee perfect centering */
     .exporting { 
-      display: inline-block !important; /* Shrink-wraps the container tightly to the table */
+      display: inline-block !important; 
       width: max-content !important; 
       max-width: none !important; 
       min-width: 0 !important;
@@ -141,6 +141,18 @@
       </ol>
     </div>
 
+    <!-- Grouping Control Toolbar -->
+    <div id="dashboardControls" class="hidden flex justify-end items-center mb-6">
+      <div class="flex items-center space-x-3 bg-white dark:bg-gpay-darkCard p-2 sm:p-3 rounded-xl shadow-sm border border-gray-200 dark:border-gpay-darkBorder">
+        <label for="timeGrouping" class="text-sm font-bold text-gray-700 dark:text-gray-300">View Data:</label>
+        <select id="timeGrouping" class="bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-gpay-blue focus:border-gpay-blue font-medium block px-3 py-1.5 text-sm outline-none transition-colors cursor-pointer">
+          <option value="day">Daily</option>
+          <option value="month" selected>Monthly</option>
+          <option value="year">Yearly</option>
+        </select>
+      </div>
+    </div>
+
     <div id="dashboardContent" class="space-y-8 sm:space-y-12"></div>
   </main>
 
@@ -215,8 +227,12 @@
     const uploadErrorText = document.getElementById('uploadErrorText');
     const initialInstructions = document.getElementById('initialInstructions');
     const container = document.getElementById('dashboardContent');
+    const dashboardControls = document.getElementById('dashboardControls');
+    const timeGrouping = document.getElementById('timeGrouping');
     const repoUrl = "https://avinash-cs.github.io/gpay-group-expenses-dashboard/";
+    
     let currentShareGroup = "";
+    let globalExpensesData = null;
 
     const sampleData = [
       {
@@ -230,7 +246,7 @@
         ]
       },
       {
-        "creation_time": "2026-08-20T14:30:00Z",
+        "creation_time": "2026-08-16T14:30:00Z",
         "group_name": "Goa Trip 🏖️",
         "total_amount": "₹1200.00",
         "items": [
@@ -249,7 +265,7 @@
         ]
       },
       {
-        "creation_time": "2026-09-10T11:00:00Z",
+        "creation_time": "2027-01-10T11:00:00Z",
         "group_name": "Goa Trip 🏖️",
         "total_amount": "₹2100.00",
         "items": [
@@ -262,9 +278,12 @@
 
     function resetUI() {
       fileInput.value = '';
+      globalExpensesData = null;
       defaultUploadState.classList.remove('hidden');
       fileSelectedState.classList.add('hidden');
       uploadError.classList.add('hidden');
+      dashboardControls.classList.add('hidden');
+      timeGrouping.value = 'month';
       container.innerHTML = '';
       initialInstructions.classList.remove('hidden');
     }
@@ -277,13 +296,19 @@
 
     removeFileBtn.addEventListener('click', resetUI);
 
+    timeGrouping.addEventListener('change', () => {
+      if (globalExpensesData) renderDashboard();
+    });
+
     loadSampleBtn.addEventListener('click', () => {
       uploadError.classList.add('hidden');
       fileNameDisplay.innerText = "Sample_Data.json";
       defaultUploadState.classList.add('hidden');
       fileSelectedState.classList.remove('hidden');
       initialInstructions.classList.add('hidden');
-      renderDashboard(sampleData);
+      dashboardControls.classList.remove('hidden');
+      globalExpensesData = sampleData;
+      renderDashboard();
     });
 
     fileInput.addEventListener('change', (event) => {
@@ -316,8 +341,10 @@
           defaultUploadState.classList.add('hidden');
           fileSelectedState.classList.remove('hidden');
           initialInstructions.classList.add('hidden');
+          dashboardControls.classList.remove('hidden');
           
-          renderDashboard(raw.Group_expenses);
+          globalExpensesData = raw.Group_expenses;
+          renderDashboard();
 
         } catch (err) {
           resetUI();
@@ -341,11 +368,14 @@
       return '₹' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    function renderDashboard(expenses) {
+    function renderDashboard() {
+      if (!globalExpensesData) return;
+      
+      const groupingMode = timeGrouping.value;
       container.innerHTML = '';
       const groups = {};
       
-      expenses.forEach(tx => {
+      globalExpensesData.forEach(tx => {
         const gName = tx.group_name || 'Unassigned Group';
         if (!groups[gName]) groups[gName] = [];
         groups[gName].push(tx);
@@ -353,42 +383,55 @@
 
       Object.keys(groups).forEach((groupName, groupIdx) => {
         const txList = groups[groupName];
-        const monthMap = {};
+        const periodMap = {};
         const memberSet = new Set();
 
         txList.forEach(tx => {
           const date = new Date(tx.creation_time);
           if (isNaN(date)) return;
 
-          const sortKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-          const monthLabel = date.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+          let sortKey, periodLabel;
 
-          if (!monthMap[sortKey]) monthMap[sortKey] = { label: monthLabel, totalSpend: 0, members: {} };
+          if (groupingMode === 'day') {
+            sortKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            periodLabel = date.toLocaleString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+          } else if (groupingMode === 'year') {
+            sortKey = `${date.getFullYear()}`;
+            periodLabel = sortKey;
+          } else { // default month
+            sortKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            periodLabel = date.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+          }
+
+          if (!periodMap[sortKey]) periodMap[sortKey] = { label: periodLabel, totalSpend: 0, members: {} };
 
           if (tx.items && tx.items.length) {
             tx.items.forEach(item => {
               const payer = item.payer || 'Unknown';
               const amt = cleanAmount(item.amount);
               memberSet.add(payer);
-              monthMap[sortKey].members[payer] = (monthMap[sortKey].members[payer] || 0) + amt;
-              monthMap[sortKey].totalSpend += amt;
+              periodMap[sortKey].members[payer] = (periodMap[sortKey].members[payer] || 0) + amt;
+              periodMap[sortKey].totalSpend += amt;
             });
           }
         });
 
-        const sortedMonths = Object.keys(monthMap).sort();
+        const sortedPeriods = Object.keys(periodMap).sort();
         const memberList = Array.from(memberSet).sort();
 
         let grandTotalSpend = 0;
         const grandMemberTotals = {};
         memberList.forEach(m => grandMemberTotals[m] = 0);
 
-        sortedMonths.forEach(mKey => {
-          grandTotalSpend += monthMap[mKey].totalSpend;
+        sortedPeriods.forEach(pKey => {
+          grandTotalSpend += periodMap[pKey].totalSpend;
           memberList.forEach(m => {
-            grandMemberTotals[m] += (monthMap[mKey].members[m] || 0);
+            grandMemberTotals[m] += (periodMap[pKey].members[m] || 0);
           });
         });
+
+        const periodHeaderTitle = groupingMode === 'day' ? 'Date' : (groupingMode === 'year' ? 'Year' : 'Month');
+        const breakdownTitle = groupingMode === 'day' ? 'Daily Expense Breakdown' : (groupingMode === 'year' ? 'Yearly Expense Breakdown' : 'Monthly Expense Breakdown');
 
         const groupCard = document.createElement('div');
         groupCard.className = "bg-white dark:bg-gpay-darkCard border border-gray-200 dark:border-gpay-darkBorder rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6 space-y-4 overflow-hidden";
@@ -418,13 +461,13 @@
         let tableHTML = `
           <div class="text-center mb-4 sm:mb-6 px-4 sm:px-0">
             <h3 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">${groupName}</h3>
-            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">Monthly Expense Breakdown</p>
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">${breakdownTitle}</p>
           </div>
           <div class="overflow-x-auto pb-2">
             <table class="w-full border-collapse border border-gray-300 dark:border-gray-700 text-xs sm:text-sm whitespace-nowrap min-w-max">
               <thead>
                 <tr class="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-semibold border-b border-gray-300 dark:border-gray-700">
-                  <th class="border border-gray-300 dark:border-gray-700 px-3 py-2.5 text-left">Month</th>
+                  <th class="border border-gray-300 dark:border-gray-700 px-3 py-2.5 text-left">${periodHeaderTitle}</th>
                   <th class="border border-gray-300 dark:border-gray-700 px-3 py-2.5 text-right">Total Spend</th>
                   ${memberList.map(m => `<th class="border border-gray-300 dark:border-gray-700 px-3 py-2.5 text-right">${m}</th>`).join('')}
                 </tr>
@@ -432,13 +475,13 @@
               <tbody>
         `;
 
-        sortedMonths.forEach(mKey => {
-          const mData = monthMap[mKey];
+        sortedPeriods.forEach(pKey => {
+          const pData = periodMap[pKey];
           tableHTML += `
             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-              <td class="bg-white dark:bg-gpay-darkCard border border-gray-300 dark:border-gray-700 px-3 py-2 font-medium text-gray-700 dark:text-gray-300">${mData.label}</td>
-              <td class="border border-gray-300 dark:border-gray-700 px-3 py-2 text-right font-semibold text-gray-900 dark:text-white">${formatINR(mData.totalSpend)}</td>
-              ${memberList.map(m => `<td class="border border-gray-300 dark:border-gray-700 px-3 py-2 text-right text-gray-600 dark:text-gray-400">${formatINR(mData.members[m] || 0)}</td>`).join('')}
+              <td class="bg-white dark:bg-gpay-darkCard border border-gray-300 dark:border-gray-700 px-3 py-2 font-medium text-gray-700 dark:text-gray-300">${pData.label}</td>
+              <td class="border border-gray-300 dark:border-gray-700 px-3 py-2 text-right font-semibold text-gray-900 dark:text-white">${formatINR(pData.totalSpend)}</td>
+              ${memberList.map(m => `<td class="border border-gray-300 dark:border-gray-700 px-3 py-2 text-right text-gray-600 dark:text-gray-400">${formatINR(pData.members[m] || 0)}</td>`).join('')}
             </tr>
           `;
         });
@@ -465,7 +508,6 @@
       });
     }
 
-    // Capture prep with a tiny 50ms delay to guarantee the CSS `.exporting` layout applies before taking the picture
     async function prepareForExport(element) {
       const htmlEl = document.documentElement;
       const wasDark = htmlEl.classList.contains('dark');
@@ -490,7 +532,6 @@
 
       const wasDark = await prepareForExport(element);
 
-      // By removing width limiters, html2canvas reads the true bounding box automatically
       const canvas = await html2canvas(element, { 
         scale: 2, 
         backgroundColor: "#ffffff",
@@ -512,7 +553,7 @@
       const element = document.getElementById(elementId);
       if (!element) return;
 
-      const message = `Check out our monthly Google Pay expense breakdown for ${groupName}! Generated securely from ${repoUrl}`;
+      const message = `Check out our ${timeGrouping.options[timeGrouping.selectedIndex].text.toLowerCase()} Google Pay expense breakdown for ${groupName}! Generated securely from ${repoUrl}`;
       
       const wasDark = await prepareForExport(element);
 
@@ -549,7 +590,8 @@
     }
 
     function shareSocial(platform) {
-      const message = `Check out our monthly Google Pay expense breakdown for ${currentShareGroup}! Generated securely from ${repoUrl} - track yours there too.`;
+      const groupingText = timeGrouping.options[timeGrouping.selectedIndex].text.toLowerCase();
+      const message = `Check out our ${groupingText} Google Pay expense breakdown for ${currentShareGroup}! Generated securely from ${repoUrl} - track yours there too.`;
       const encodedMsg = encodeURIComponent(message);
       const encodedUrl = encodeURIComponent(repoUrl);
 
