@@ -7,7 +7,9 @@
   <title>Google Pay Group Expense Dashboard | @avinash-cs</title>
   <meta name="description" content="A free, secure, client-side dashboard to visualize and share your Google Pay group expenses." />
   
+  <!-- FIX: Added inline SVG favicon to prevent the 404 favicon.ico error in the console -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -57,7 +59,9 @@
         </button>
         <div class="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm bg-gray-100 dark:bg-gray-800 px-2 sm:px-3 py-1.5 rounded-full border border-gray-200 dark:border-gpay-darkBorder">
           <span class="text-gray-500 dark:text-gray-400 font-medium hidden sm:inline">Visitors:</span>
-          <img src="https://api.visitorbadge.io/api/visitors?page_id=avinashcs-gpay-dashboard&label=Views&countColor=%231A73E8" alt="Visitor Counter" class="inline h-4 sm:h-5" />
+          <!-- FIX: Changed page_id= to path= to resolve the 400 Bad Request error -->
+          <img id="visitorBadge" alt="Visitor Counter" class="inline h-4 sm:h-5 hidden" />
+          <span id="visitorLocalFallback" class="text-xs text-red-500 font-medium hidden">Live Only</span>
         </div>
       </div>
     </div>
@@ -147,12 +151,22 @@
   </div>
 
   <script>
-    // Safe LocalStorage access for local file testing
+    const visitorBadge = document.getElementById('visitorBadge');
+    const localFallback = document.getElementById('visitorLocalFallback');
+    
+    // FIX: Replaced page_id= with path= for visitorbadge.io API to prevent 400 Bad Request error
+    if (window.location.protocol === 'file:') {
+      localFallback.classList.remove('hidden');
+    } else {
+      visitorBadge.src = "https://api.visitorbadge.io/api/visitors?path=avinashcs-gpay-dashboard&label=Views&countColor=%231A73E8";
+      visitorBadge.classList.remove('hidden');
+    }
+
     function getTheme() {
       try {
         if (localStorage.theme === 'dark') return 'dark';
         if (localStorage.theme === 'light') return 'light';
-      } catch (e) { console.warn("Local storage blocked - using system preference"); }
+      } catch (e) {}
       if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
       return 'light';
     }
@@ -422,7 +436,6 @@
       canvas.toBlob(async (blob) => {
         const file = new File([blob], `${groupName.replace(/\s+/g, '_')}_expenses.png`, { type: "image/png" });
 
-        // Safe web share checking
         try {
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
@@ -432,11 +445,8 @@
             });
             return;
           }
-        } catch (err) {
-          console.log("Native share failed/cancelled.");
-        }
+        } catch (err) {}
         
-        // Fallback if native share fails or isn't supported
         currentShareGroup = groupName;
         document.getElementById('shareModalTitle').innerText = `Share '${groupName}'`;
         document.getElementById('shareModal').classList.remove('hidden');
