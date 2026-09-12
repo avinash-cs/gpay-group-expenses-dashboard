@@ -4,35 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <!-- SEO Metadata -->
   <title>Google Pay Group Expense Dashboard | @avinash-cs</title>
   <meta name="description" content="A free, secure, client-side dashboard to visualize and share your Google Pay group expenses." />
   
-  <!-- Google Fonts: Roboto -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Tailwind Configuration for GPay Colors & Dark Mode -->
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
-          fontFamily: {
-            sans: ['Roboto', 'sans-serif'],
-          },
+          fontFamily: { sans: ['Roboto', 'sans-serif'] },
           colors: {
             gpay: {
-              blue: '#1A73E8',
-              blueHover: '#1557B0',
-              green: '#1E8E3E',
-              darkBg: '#202124',
-              darkCard: '#303134',
-              darkBorder: '#5F6368'
+              blue: '#1A73E8', blueHover: '#1557B0', green: '#1E8E3E',
+              darkBg: '#202124', darkCard: '#303134', darkBorder: '#5F6368'
             }
           }
         }
@@ -40,20 +31,18 @@
     }
   </script>
 
-  <!-- html2canvas for Image Generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   
   <style>
-    /* Hide scrollbar for a cleaner mobile look while preserving scroll functionality */
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    /* Fix for html2canvas to ignore sticky positioning during export */
     .exporting .sticky { position: static !important; }
+    @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .animate-slide-up { animation: slide-up 0.3s ease-out forwards; }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800 dark:bg-gpay-darkBg dark:text-gray-200 min-h-screen flex flex-col font-sans transition-colors duration-200">
 
-  <!-- Top Navigation Bar -->
   <header class="bg-white dark:bg-gpay-darkCard border-b border-gray-200 dark:border-gpay-darkBorder sticky top-0 z-30 shadow-sm transition-colors duration-200">
     <div class="max-w-6xl mx-auto px-4 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-3">
       <div class="flex items-center space-x-2 sm:space-x-3">
@@ -62,16 +51,13 @@
       </div>
       
       <div class="flex items-center space-x-2 sm:space-x-4">
-        <!-- Theme Toggle Button -->
         <button id="themeToggleBtn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none" aria-label="Toggle Dark Mode">
           <svg id="themeIconSun" class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400 hidden dark:block" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path></svg>
           <svg id="themeIconMoon" class="w-5 h-5 sm:w-6 sm:h-6 text-gray-500 dark:hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
         </button>
-
-        <!-- Visitor Badge -->
         <div class="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm bg-gray-100 dark:bg-gray-800 px-2 sm:px-3 py-1.5 rounded-full border border-gray-200 dark:border-gpay-darkBorder">
           <span class="text-gray-500 dark:text-gray-400 font-medium hidden sm:inline">Visitors:</span>
-          <img src="https://api.visitorbadge.io/api/visitors?page_id=avinash-cs.gpay-group-expenses-dashboard&label=Views&countColor=%231A73E8" alt="Visitor Counter" class="inline h-4 sm:h-5 min-w-[50px]" onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<span class=\"text-xs text-red-400\">Live only</span>');" />
+          <img src="https://api.visitorbadge.io/api/visitors?page_id=avinashcs-gpay-dashboard&label=Views&countColor=%231A73E8" alt="Visitor Counter" class="inline h-4 sm:h-5" />
         </div>
       </div>
     </div>
@@ -79,10 +65,8 @@
 
   <main class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 flex-1 w-full">
     
-    <!-- Upload Section -->
     <div class="bg-white dark:bg-gpay-darkCard p-6 sm:p-8 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gpay-darkBorder hover:border-gpay-blue dark:hover:border-gpay-blue transition-colors text-center shadow-sm mb-8 sm:mb-10 relative" id="uploadArea">
       
-      <!-- Upload State: Default -->
       <div id="defaultUploadState" class="max-w-md mx-auto">
         <svg class="w-10 h-10 sm:w-12 sm:h-12 text-gpay-blue mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -95,7 +79,6 @@
         </label>
       </div>
 
-      <!-- Upload State: File Selected -->
       <div id="fileSelectedState" class="max-w-md mx-auto hidden">
         <div class="flex flex-col items-center justify-center space-y-3 mb-4">
           <div class="flex items-center justify-center bg-green-100 dark:bg-green-900/40 text-gpay-green w-12 h-12 sm:w-14 sm:h-14 rounded-full">
@@ -111,14 +94,12 @@
         </button>
       </div>
 
-      <!-- Validation Error Message -->
       <div id="uploadError" class="hidden mt-6 text-xs sm:text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 py-3 px-4 rounded-lg border border-red-200 dark:border-red-800 max-w-md mx-auto flex items-center justify-center gap-2 text-left">
         <svg class="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-        <span id="uploadErrorText">Error message goes here</span>
+        <span id="uploadErrorText"></span>
       </div>
     </div>
 
-    <!-- Instructions / Output Container -->
     <div id="initialInstructions" class="bg-white dark:bg-gpay-darkCard p-5 sm:p-8 rounded-2xl border border-gray-200 dark:border-gpay-darkBorder shadow-sm max-w-3xl mx-auto mb-10">
       <div class="flex items-center space-x-3 mb-5 sm:mb-6">
         <div class="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg text-gpay-blue shrink-0">
@@ -137,7 +118,6 @@
       </ol>
     </div>
 
-    <!-- Rendered Tables -->
     <div id="dashboardContent" class="space-y-8 sm:space-y-12"></div>
   </main>
 
@@ -166,17 +146,21 @@
     </div>
   </div>
 
-  <style>
-    @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-    .animate-slide-up { animation: slide-up 0.3s ease-out forwards; }
-  </style>
-
   <script>
-    // Theme Toggle Logic
-    const themeToggleBtn = document.getElementById('themeToggleBtn');
-    const htmlEl = document.documentElement;
+    // Safe LocalStorage access for local file testing
+    function getTheme() {
+      try {
+        if (localStorage.theme === 'dark') return 'dark';
+        if (localStorage.theme === 'light') return 'light';
+      } catch (e) { console.warn("Local storage blocked - using system preference"); }
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
+      return 'light';
+    }
 
-    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    const htmlEl = document.documentElement;
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+    if (getTheme() === 'dark') {
       htmlEl.classList.add('dark');
     } else {
       htmlEl.classList.remove('dark');
@@ -184,14 +168,11 @@
 
     themeToggleBtn.addEventListener('click', () => {
       htmlEl.classList.toggle('dark');
-      if (htmlEl.classList.contains('dark')) {
-        localStorage.theme = 'dark';
-      } else {
-        localStorage.theme = 'light';
-      }
+      try {
+        localStorage.theme = htmlEl.classList.contains('dark') ? 'dark' : 'light';
+      } catch (e) {}
     });
 
-    // Main App Logic
     const fileInput = document.getElementById('jsonFileInput');
     const defaultUploadState = document.getElementById('defaultUploadState');
     const fileSelectedState = document.getElementById('fileSelectedState');
@@ -235,7 +216,6 @@
       reader.onload = (e) => {
         let fileContent = e.target.result;
         
-        // Strip out the Google Takeout anti-hijacking prefix
         if (fileContent.startsWith(")]}'")) {
           fileContent = fileContent.replace(/^\)\]\}'\n?/, '');
         }
@@ -257,7 +237,7 @@
 
         } catch (err) {
           resetUI();
-          showError(err.message || "Error processing file. Please ensure it's a valid Google Pay JSON.");
+          showError(err.message || "Error processing file. Please ensure it's a valid JSON.");
         }
       };
 
@@ -442,21 +422,24 @@
       canvas.toBlob(async (blob) => {
         const file = new File([blob], `${groupName.replace(/\s+/g, '_')}_expenses.png`, { type: "image/png" });
 
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
+        // Safe web share checking
+        try {
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
               files: [file],
               title: `${groupName} Expense Summary`,
               text: message
             });
-          } catch (err) {
-            console.log("User cancelled native share.");
+            return;
           }
-        } else {
-          currentShareGroup = groupName;
-          document.getElementById('shareModalTitle').innerText = `Share '${groupName}'`;
-          document.getElementById('shareModal').classList.remove('hidden');
+        } catch (err) {
+          console.log("Native share failed/cancelled.");
         }
+        
+        // Fallback if native share fails or isn't supported
+        currentShareGroup = groupName;
+        document.getElementById('shareModalTitle').innerText = `Share '${groupName}'`;
+        document.getElementById('shareModal').classList.remove('hidden');
       });
     }
 
