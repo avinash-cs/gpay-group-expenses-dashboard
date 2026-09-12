@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- SEO Metadata -->
+  <title>Google Pay Group Expense Dashboard | @avinash-cs</title>
+  <meta name="description" content="A free, secure, client-side dashboard to visualize and share your Google Pay group expenses." />
+  
+  <!-- Google Fonts: Roboto -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Tailwind Configuration for GPay Colors & Dark Mode -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Roboto', 'sans-serif'],
+          },
+          colors: {
+            gpay: {
+              blue: '#1A73E8',
+              blueHover: '#1557B0',
+              green: '#1E8E3E',
+              darkBg: '#202124',
+              darkCard: '#303134',
+              darkBorder: '#5F6368'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- html2canvas for Image Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
+  <style>
+    /* Hide scrollbar for a cleaner mobile look while preserving scroll functionality */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    /* Fix for html2canvas to ignore sticky positioning during export */
+    .exporting .sticky { position: static !important; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-gpay-darkBg dark:text-gray-200 min-h-screen flex flex-col font-sans transition-colors duration-200">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white dark:bg-gpay-darkCard border-b border-gray-200 dark:border-gpay-darkBorder sticky top-0 z-30 shadow-sm transition-colors duration-200">
+    <div class="max-w-6xl mx-auto px-4 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-3">
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <div class="bg-gpay-blue text-white p-1.5 sm:p-2 rounded-lg font-bold text-base sm:text-lg leading-none shadow-sm">GPay</div>
+        <h1 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">Group Expense Dashboard</h1>
+      </div>
+      
+      <div class="flex items-center space-x-2 sm:space-x-4">
+        <!-- Theme Toggle Button -->
+        <button id="themeToggleBtn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none" aria-label="Toggle Dark Mode">
+          <svg id="themeIconSun" class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400 hidden dark:block" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path></svg>
+          <svg id="themeIconMoon" class="w-5 h-5 sm:w-6 sm:h-6 text-gray-500 dark:hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+        </button>
+
+        <!-- Visitor Badge -->
+        <div class="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm bg-gray-100 dark:bg-gray-800 px-2 sm:px-3 py-1.5 rounded-full border border-gray-200 dark:border-gpay-darkBorder">
+          <span class="text-gray-500 dark:text-gray-400 font-medium hidden sm:inline">Visitors:</span>
+          <img src="https://api.visitorbadge.io/api/visitors?page_id=avinash-cs.gpay-group-expenses-dashboard&label=Views&countColor=%231A73E8" alt="Visitor Counter" class="inline h-4 sm:h-5 min-w-[50px]" onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<span class=\"text-xs text-red-400\">Live only</span>');" />
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 flex-1 w-full">
+    
+    <!-- Upload Section -->
+    <div class="bg-white dark:bg-gpay-darkCard p-6 sm:p-8 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gpay-darkBorder hover:border-gpay-blue dark:hover:border-gpay-blue transition-colors text-center shadow-sm mb-8 sm:mb-10 relative" id="uploadArea">
+      
+      <!-- Upload State: Default -->
+      <div id="defaultUploadState" class="max-w-md mx-auto">
+        <svg class="w-10 h-10 sm:w-12 sm:h-12 text-gpay-blue mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        </svg>
+        <h2 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-1">Upload `Group expenses.json`</h2>
+        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-4 px-2">Upload your exported Google Pay JSON file. Processing happens 100% securely in your browser.</p>
+        <label class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-gpay-blue hover:bg-gpay-blueHover text-white font-medium rounded-xl cursor-pointer shadow-sm transition-all">
+          <span>Select JSON File</span>
+          <input type="file" id="jsonFileInput" accept=".json" class="hidden" />
+        </label>
+      </div>
+
+      <!-- Upload State: File Selected -->
+      <div id="fileSelectedState" class="max-w-md mx-auto hidden">
+        <div class="flex flex-col items-center justify-center space-y-3 mb-4">
+          <div class="flex items-center justify-center bg-green-100 dark:bg-green-900/40 text-gpay-green w-12 h-12 sm:w-14 sm:h-14 rounded-full">
+            <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+          </div>
+          <div class="w-full px-2">
+            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium">Active File</p>
+            <p id="fileNameDisplay" class="text-base sm:text-lg font-bold text-gray-900 dark:text-white truncate w-full mx-auto"></p>
+          </div>
+        </div>
+        <button id="removeFileBtn" class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 font-medium rounded-lg transition-colors border border-red-200 dark:border-red-800 shadow-sm">
+          Remove File
+        </button>
+      </div>
+
+      <!-- Validation Error Message -->
+      <div id="uploadError" class="hidden mt-6 text-xs sm:text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 py-3 px-4 rounded-lg border border-red-200 dark:border-red-800 max-w-md mx-auto flex items-center justify-center gap-2 text-left">
+        <svg class="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        <span id="uploadErrorText">Error message goes here</span>
+      </div>
+    </div>
+
+    <!-- Instructions / Output Container -->
+    <div id="initialInstructions" class="bg-white dark:bg-gpay-darkCard p-5 sm:p-8 rounded-2xl border border-gray-200 dark:border-gpay-darkBorder shadow-sm max-w-3xl mx-auto mb-10">
+      <div class="flex items-center space-x-3 mb-5 sm:mb-6">
+        <div class="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg text-gpay-blue shrink-0">
+          <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white leading-tight">How to get your Google Pay Group Expenses Data</h3>
+      </div>
+      <ol class="list-decimal list-outside space-y-3 sm:space-y-4 text-sm sm:text-base text-gray-700 dark:text-gray-300 ml-4 sm:ml-5">
+        <li class="pl-1">Go to <a href="https://takeout.google.com/" target="_blank" class="text-gpay-blue hover:underline font-semibold">Google Takeout</a> and sign in.</li>
+        <li class="pl-1">Click <strong>Deselect all</strong> at the top of the list.</li>
+        <li class="pl-1">Scroll down and check the box next to <strong>Google Pay</strong>.</li>
+        <li class="pl-1">Scroll to the bottom and click <strong>Next step</strong>, then <strong>Create export</strong>.</li>
+        <li class="pl-1">Download and extract the ZIP file once it is ready.</li>
+        <li class="pl-1">Look for a file named <code class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 font-mono text-xs sm:text-sm break-all">Group expenses.json</code> inside the folder.</li>
+        <li class="pl-1">Upload that file using the button above to view your dashboard!</li>
+      </ol>
+    </div>
+
+    <!-- Rendered Tables -->
+    <div id="dashboardContent" class="space-y-8 sm:space-y-12"></div>
+  </main>
+
+  <footer class="bg-white dark:bg-gpay-darkCard border-t border-gray-200 dark:border-gpay-darkBorder py-6 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-auto transition-colors">
+    <p>Pure Client-Side Processing • No Data Stored</p>
+    <p class="mt-2 text-gray-600 dark:text-gray-300">
+      Built by <a href="https://github.com/avinash-cs" target="_blank" class="text-gpay-blue hover:underline font-semibold">@avinash-cs</a> | 
+      <a href="https://github.com/avinash-cs/gpay-group-expenses-dashboard" target="_blank" class="text-gpay-blue hover:underline font-semibold">View Source on GitHub</a>
+    </p>
+  </footer>
+
+  <!-- Custom Share Modal -->
+  <div id="shareModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-end sm:items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+    <div class="bg-white dark:bg-gpay-darkCard rounded-t-2xl sm:rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-gray-200 dark:border-gpay-darkBorder animate-slide-up sm:animate-none">
+      <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2" id="shareModalTitle">Share Dashboard</h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Select a platform to share the generated link & message.</p>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+        <button onclick="shareSocial('whatsapp')" class="flex items-center justify-center gap-2 bg-[#25D366] text-white py-3 sm:py-2.5 rounded-xl font-medium hover:bg-[#20bd5a] transition shadow-sm">WhatsApp</button>
+        <button onclick="shareSocial('x')" class="flex items-center justify-center gap-2 bg-black text-white py-3 sm:py-2.5 rounded-xl font-medium hover:bg-gray-800 transition shadow-sm">X (Twitter)</button>
+        <button onclick="shareSocial('linkedin')" class="flex items-center justify-center gap-2 bg-[#0077b5] text-white py-3 sm:py-2.5 rounded-xl font-medium hover:bg-[#006097] transition shadow-sm">LinkedIn</button>
+        <button onclick="shareSocial('youtube')" class="flex items-center justify-center gap-2 bg-[#FF0000] text-white py-3 sm:py-2.5 rounded-xl font-medium hover:bg-[#d90000] transition shadow-sm">YouTube</button>
+      </div>
+      
+      <button onclick="closeShareModal()" class="w-full py-3 sm:py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition">Cancel</button>
+    </div>
+  </div>
+
+  <style>
+    @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .animate-slide-up { animation: slide-up 0.3s ease-out forwards; }
+  </style>
+
+  <script>
+    // Theme Toggle Logic
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const htmlEl = document.documentElement;
+
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      htmlEl.classList.add('dark');
+    } else {
+      htmlEl.classList.remove('dark');
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      htmlEl.classList.toggle('dark');
+      if (htmlEl.classList.contains('dark')) {
+        localStorage.theme = 'dark';
+      } else {
+        localStorage.theme = 'light';
+      }
+    });
+
+    // Main App Logic
+    const fileInput = document.getElementById('jsonFileInput');
+    const defaultUploadState = document.getElementById('defaultUploadState');
+    const fileSelectedState = document.getElementById('fileSelectedState');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    const removeFileBtn = document.getElementById('removeFileBtn');
+    const uploadError = document.getElementById('uploadError');
+    const uploadErrorText = document.getElementById('uploadErrorText');
+    const initialInstructions = document.getElementById('initialInstructions');
+    const container = document.getElementById('dashboardContent');
+    const repoUrl = "https://avinash-cs.github.io/gpay-group-expenses-dashboard/";
+    let currentShareGroup = "";
+
+    function resetUI() {
+      fileInput.value = '';
+      defaultUploadState.classList.remove('hidden');
+      fileSelectedState.classList.add('hidden');
+      uploadError.classList.add('hidden');
+      container.innerHTML = '';
+      initialInstructions.classList.remove('hidden');
+    }
+
+    function showError(message) {
+      uploadErrorText.innerText = message;
+      uploadError.classList.remove('hidden');
+      setTimeout(() => { uploadError.classList.add('hidden'); }, 5000);
+    }
+
+    removeFileBtn.addEventListener('click', resetUI);
+
+    fileInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (!file.name.toLowerCase().endsWith('.json')) {
+        resetUI();
+        showError("Invalid file format. Please select the Group expenses.json file.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        let fileContent = e.target.result;
+        
+        // Strip out the Google Takeout anti-hijacking prefix
+        if (fileContent.startsWith(")]}'")) {
+          fileContent = fileContent.replace(/^\)\]\}'\n?/, '');
+        }
+
+        try {
+          const raw = JSON.parse(fileContent);
+          
+          if (!raw || typeof raw !== 'object' || !raw.Group_expenses || !Array.isArray(raw.Group_expenses) || raw.Group_expenses.length === 0) {
+            throw new Error("This file doesn't look like a valid Google Pay export. Please ensure you uploaded the unedited 'Group expenses.json'.");
+          }
+
+          uploadError.classList.add('hidden');
+          fileNameDisplay.innerText = file.name;
+          defaultUploadState.classList.add('hidden');
+          fileSelectedState.classList.remove('hidden');
+          initialInstructions.classList.add('hidden');
+          
+          renderDashboard(raw.Group_expenses);
+
+        } catch (err) {
+          resetUI();
+          showError(err.message || "Error processing file. Please ensure it's a valid Google Pay JSON.");
+        }
+      };
+
+      reader.onerror = () => {
+        resetUI();
+        showError("Failed to read the file from your device.");
+      }
+      reader.readAsText(file);
+    });
+
+    function cleanAmount(str) {
+      if (typeof str === 'number') return str;
+      return parseFloat(String(str).replace(/[^\d.-]/g, '')) || 0;
+    }
+
+    function formatINR(num) {
+      return '₹' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function renderDashboard(expenses) {
+      container.innerHTML = '';
+      const groups = {};
+      
+      expenses.forEach(tx => {
+        const gName = tx.group_name || 'Unassigned Group';
+        if (!groups[gName]) groups[gName] = [];
+        groups[gName].push(tx);
+      });
+
+      Object.keys(groups).forEach((groupName, groupIdx) => {
+        const txList = groups[groupName];
+        const monthMap = {};
+        const memberSet = new Set();
+
+        txList.forEach(tx => {
+          const date = new Date(tx.creation_time);
+          if (isNaN(date)) return;
+
+          const sortKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          const monthLabel = date.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+
+          if (!monthMap[sortKey]) monthMap[sortKey] = { label: monthLabel, totalSpend: 0, members: {} };
+
+          if (tx.items && tx.items.length) {
+            tx.items.forEach(item => {
+              const payer = item.payer || 'Unknown';
+              const amt = cleanAmount(item.amount);
+              memberSet.add(payer);
+              monthMap[sortKey].members[payer] = (monthMap[sortKey].members[payer] || 0) + amt;
+              monthMap[sortKey].totalSpend += amt;
+            });
+          }
+        });
+
+        const sortedMonths = Object.keys(monthMap).sort();
+        const memberList = Array.from(memberSet).sort();
+
+        let grandTotalSpend = 0;
+        const grandMemberTotals = {};
+        memberList.forEach(m => grandMemberTotals[m] = 0);
+
+        sortedMonths.forEach(mKey => {
+          grandTotalSpend += monthMap[mKey].totalSpend;
+          memberList.forEach(m => {
+            grandMemberTotals[m] += (monthMap[mKey].members[m] || 0);
+          });
+        });
+
+        const groupCard = document.createElement('div');
+        groupCard.className = "bg-white dark:bg-gpay-darkCard border border-gray-200 dark:border-gpay-darkBorder rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6 space-y-4 overflow-hidden";
+        
+        const cardHeader = document.createElement('div');
+        cardHeader.className = "flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-100 dark:border-gray-700 pb-4 gap-4";
+        cardHeader.innerHTML = `
+          <div class="w-full md:w-auto">
+            <h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white break-words">${groupName}</h3>
+            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">Total Spending: <span class="font-bold text-gpay-blue">${formatINR(grandTotalSpend)}</span></p>
+          </div>
+          <div class="flex flex-row gap-2 w-full md:w-auto">
+            <button onclick="exportAsImage('table-container-${groupIdx}', '${groupName}')" class="flex-1 md:flex-none justify-center px-3 sm:px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs sm:text-sm font-medium rounded-xl transition-colors inline-flex items-center gap-1.5">
+              <span>📥 Download</span>
+            </button>
+            <button onclick="shareImageNatively('table-container-${groupIdx}', '${groupName}')" class="flex-1 md:flex-none justify-center px-3 sm:px-4 py-2.5 bg-gpay-blue hover:bg-gpay-blueHover text-white text-xs sm:text-sm font-medium rounded-xl transition-colors inline-flex items-center gap-1.5 shadow-sm">
+              <span>🔗 Share</span>
+            </button>
+          </div>
+        `;
+        groupCard.appendChild(cardHeader);
+
+        const tableWrapper = document.createElement('div');
+        tableWrapper.id = `table-container-${groupIdx}`;
+        tableWrapper.className = "bg-white dark:bg-gpay-darkCard p-2 sm:p-6 rounded-none sm:rounded-xl -mx-4 sm:mx-0";
+
+        let tableHTML = `
+          <div class="text-center mb-4 sm:mb-6 px-4 sm:px-0">
+            <h4 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Monthly Breakdown</h4>
+          </div>
+          <div class="overflow-x-auto hide-scrollbar px-4 sm:px-0 pb-2">
+            <table class="w-full border-collapse border border-gray-300 dark:border-gray-700 text-xs sm:text-sm whitespace-nowrap min-w-max">
+              <thead>
+                <tr class="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-semibold border-b border-gray-300 dark:border-gray-700">
+                  <th class="sticky left-0 z-10 bg-gray-100 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-700 px-3 py-2.5 text-left shadow-[1px_0_0_0_#d1d5db] dark:shadow-[1px_0_0_0_#374151]">Month</th>
+                  <th class="border border-gray-300 dark:border-gray-700 px-3 py-2.5 text-right">Total Spend</th>
+                  ${memberList.map(m => `<th class="border border-gray-300 dark:border-gray-700 px-3 py-2.5 text-right">${m}</th>`).join('')}
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        sortedMonths.forEach(mKey => {
+          const mData = monthMap[mKey];
+          tableHTML += `
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+              <td class="sticky left-0 z-10 bg-white dark:bg-gpay-darkCard border-r border-gray-300 dark:border-gray-700 px-3 py-2 font-medium text-gray-700 dark:text-gray-300 shadow-[1px_0_0_0_#e5e7eb] dark:shadow-[1px_0_0_0_#374151]">${mData.label}</td>
+              <td class="border border-gray-300 dark:border-gray-700 px-3 py-2 text-right font-semibold text-gray-900 dark:text-white">${formatINR(mData.totalSpend)}</td>
+              ${memberList.map(m => `<td class="border border-gray-300 dark:border-gray-700 px-3 py-2 text-right text-gray-600 dark:text-gray-400">${formatINR(mData.members[m] || 0)}</td>`).join('')}
+            </tr>
+          `;
+        });
+
+        tableHTML += `
+              <tr class="bg-gray-100 dark:bg-gray-800 font-bold border-t-2 border-gray-400 dark:border-gray-600">
+                <td class="sticky left-0 z-10 bg-gray-100 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-700 px-3 py-3 text-gray-900 dark:text-white shadow-[1px_0_0_0_#d1d5db] dark:shadow-[1px_0_0_0_#374151]">Total</td>
+                <td class="border border-gray-300 dark:border-gray-700 px-3 py-3 text-right text-gpay-blue">${formatINR(grandTotalSpend)}</td>
+                ${memberList.map(m => `<td class="border border-gray-300 dark:border-gray-700 px-3 py-3 text-right text-gray-900 dark:text-white">${formatINR(grandMemberTotals[m])}</td>`).join('')}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 text-center text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 font-medium tracking-wide">
+          Generated via <span class="text-gpay-blue font-bold">avinash-cs/gpay-group-expenses-dashboard</span>
+          <br class="sm:hidden"/> <span class="hidden sm:inline">•</span> Create yours at: ${repoUrl}
+        </div>
+        `;
+
+        tableWrapper.innerHTML = tableHTML;
+        groupCard.appendChild(tableWrapper);
+        container.appendChild(groupCard);
+      });
+    }
+
+    async function exportAsImage(elementId, groupName) {
+      const element = document.getElementById(elementId);
+      if (!element) return;
+
+      const originalClass = element.className;
+      element.classList.add('exporting'); 
+      element.classList.remove('bg-gpay-darkCard', 'dark');
+      element.classList.add('bg-white', 'text-gray-900');
+
+      const canvas = await html2canvas(element, { scale: 2, backgroundColor: "#ffffff" });
+      
+      element.className = originalClass;
+      element.classList.remove('exporting');
+
+      canvas.toBlob((blob) => {
+        const link = document.createElement('a');
+        link.download = `${groupName.replace(/\s+/g, '_')}_expenses.png`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        URL.revokeObjectURL(link.href);
+      });
+    }
+
+    async function shareImageNatively(elementId, groupName) {
+      const element = document.getElementById(elementId);
+      if (!element) return;
+
+      const message = `Check out our monthly Google Pay expense breakdown for ${groupName}! Generated securely from ${repoUrl}`;
+      
+      const originalClass = element.className;
+      element.classList.add('exporting');
+      element.classList.remove('bg-gpay-darkCard', 'dark');
+      element.classList.add('bg-white', 'text-gray-900');
+
+      const canvas = await html2canvas(element, { scale: 2, backgroundColor: "#ffffff" });
+      
+      element.className = originalClass;
+      element.classList.remove('exporting');
+
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], `${groupName.replace(/\s+/g, '_')}_expenses.png`, { type: "image/png" });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: `${groupName} Expense Summary`,
+              text: message
+            });
+          } catch (err) {
+            console.log("User cancelled native share.");
+          }
+        } else {
+          currentShareGroup = groupName;
+          document.getElementById('shareModalTitle').innerText = `Share '${groupName}'`;
+          document.getElementById('shareModal').classList.remove('hidden');
+        }
+      });
+    }
+
+    function closeShareModal() {
+      document.getElementById('shareModal').classList.add('hidden');
+    }
+
+    function shareSocial(platform) {
+      const message = `Check out our monthly Google Pay expense breakdown for ${currentShareGroup}! Generated securely from ${repoUrl} - track yours there too.`;
+      const encodedMsg = encodeURIComponent(message);
+      const encodedUrl = encodeURIComponent(repoUrl);
+
+      let openUrl = "";
+      if (platform === 'whatsapp') {
+        openUrl = `https://api.whatsapp.com/send?text=${encodedMsg}`;
+      } else if (platform === 'x') {
+        openUrl = `https://twitter.com/intent/tweet?text=${encodedMsg}`;
+      } else if (platform === 'linkedin') {
+        openUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+        navigator.clipboard.writeText(message);
+      } else if (platform === 'youtube') {
+        navigator.clipboard.writeText(message);
+        alert("Text copied to clipboard! Paste this directly into your YouTube Community post.");
+        closeShareModal();
+        return;
+      }
+
+      if (openUrl) window.open(openUrl, '_blank', 'noopener,noreferrer');
+      closeShareModal();
+    }
+  </script>
+</body>
+</html>
